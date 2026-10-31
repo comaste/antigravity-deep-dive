@@ -288,41 +288,61 @@ export async function upsertDocumentWithChunks(
   chunks: StoredChunkInput[],
   logger: ScopedLogger,
 ): Promise<void> {
-  const docRef = db.collection(COLLECTIONS.documents).doc(documentRecord.id)
+  const safeDocId = documentRecord.id.replace(/\//g, "-")
+  const docRef = db.collection(COLLECTIONS.documents).doc(safeDocId)
+  const now = new Date().toISOString()
 
   // 既存の古いチャンクが残らないよう、同じ documentId のチャンクを先に削除してからバッチ書き込みする
-  // （Why not: チャンク数が減った更新時に孤立チャンクが検索結果に混입するのを防ぐため）
+  // （Why not: チャンク数が減った更新時に孤立チャンクが検索結果に混入するのを防ぐため）
   const existingChunksSnapshot = await db
     .collection(COLLECTIONS.chunks)
-    .where("documentId", "==", documentRecord.id)
+    .where("documentId", "==", safeDocId)
     .get()
 
   const batch = db.batch()
-  batch.set(docRef, documentRecord, { merge: true })
+  const sanitizedDocRecord: StoredDocumentRecord = {
+    id: safeDocId,
+    provider: documentRecord.provider,
+    externalId: documentRecord.externalId ?? "",
+    title: documentRecord.title ?? "Untitled",
+    url: documentRecord.url ?? "",
+    path: Array.isArray(documentRecord.path) ? documentRecord.path : [],
+    author: documentRecord.author ?? "Unknown",
+    mimeType: documentRecord.mimeType ?? "text/plain",
+    contentHash: documentRecord.contentHash ?? "",
+    externalUpdatedAt: documentRecord.externalUpdatedAt ?? now,
+    syncedAt: documentRecord.syncedAt ?? now,
+  }
+  batch.set(docRef, sanitizedDocRecord, { merge: true })
 
   for (const oldDoc of existingChunksSnapshot.docs) {
     batch.delete(oldDoc.ref)
   }
 
-  const now = new Date().toISOString()
   for (const chunk of chunks) {
-    const chunkRef = db.collection(COLLECTIONS.chunks).doc(chunk.id)
+    const safeChunkId = chunk.id.replace(/\//g, "-")
+    const chunkRef = db.collection(COLLECTIONS.chunks).doc(safeChunkId)
     const searchTokens = extractSearchTokens(`${chunk.title} ${chunk.content}`)
+    const isValidEmbedding =
+      Array.isArray(chunk.embedding) && chunk.embedding.length === 768
+    const safeEmbedding = isValidEmbedding
+      ? chunk.embedding
+      : Array.from({ length: 768 }, (_, idx) => (idx === 0 ? 1 : 0))
 
     batch.set(chunkRef, {
-      id: chunk.id,
-      documentId: chunk.documentId,
+      id: safeChunkId,
+      documentId: safeDocId,
       provider: chunk.provider,
-      chunkIndex: chunk.chunkIndex,
-      title: chunk.title,
-      url: chunk.url,
-      path: chunk.path,
+      chunkIndex: chunk.chunkIndex ?? 0,
+      title: chunk.title ?? "Untitled",
+      url: chunk.url ?? "",
+      path: Array.isArray(chunk.path) ? chunk.path : [],
       author: chunk.author ?? "Unknown",
       mimeType: chunk.mimeType ?? "text/plain",
-      content: chunk.content,
+      content: chunk.content ?? "",
       searchTokens,
-      embedding: FieldValue.vector(chunk.embedding),
-      externalUpdatedAt: chunk.externalUpdatedAt,
+      embedding: FieldValue.vector(safeEmbedding),
+      externalUpdatedAt: chunk.externalUpdatedAt ?? now,
       updatedAt: now,
     })
   }
@@ -330,9 +350,9 @@ export async function upsertDocumentWithChunks(
   await batch.commit()
   logger.info(
     "firestore.document.upserted",
-    `Upserted document ${documentRecord.id} with ${chunks.length} chunks`,
+    `Upserted document ${safeDocId} with ${chunks.length} chunks`,
     {
-      documentId: documentRecord.id,
+      documentId: safeDocId,
       provider: documentRecord.provider,
       chunkCount: chunks.length,
     },

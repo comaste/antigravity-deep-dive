@@ -430,12 +430,14 @@ if (isDirectServerRun) {
     {
       fetch: app.fetch,
       port,
+      hostname: "0.0.0.0",
     },
     (info) => {
       serverLogger.info(
         "server.listening",
-        `Antigravity Hybrid Search API listening on http://localhost:${info.port}`,
+        `Antigravity Hybrid Search API listening on http://${info.address}:${info.port}`,
         {
+          address: info.address,
           port: info.port,
           projectId: GCP_PROJECT_ID,
           firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST ?? null,

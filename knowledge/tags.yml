@@ -13,3 +13,9 @@ tags:
     description: システム利用ガイド・運用マニュアル・技術ドキュメントの作成および配信アーキテクチャに関する知見
   static-hosting:
     description: Vite public 配信、GitHub Pages、およびバックエンド直接配信を含む静的 Web アセットのマルチチャネルホスティング設計
+  unicode:
+    description: UTF-16 サロゲートペア、Unicode コードポイント、文字コード正規化、絵文字および不正文字処理に関する知見
+  grpc:
+    description: gRPC および Protocol Buffers の文字列シリアライズ、型バリデーション、通信エラーハンドリングに関する知見
+  rag:
+    description: 検索拡張生成 (Retrieval-Augmented Generation) のチャンク分割、プロンプト拡張、引用元追跡に関する知見

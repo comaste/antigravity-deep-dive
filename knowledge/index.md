@@ -22,6 +22,9 @@ trust_signals:
 - [Firestore における Vector Search と Bi-gram を統合したハイブリッド検索設計](./firestore-hybrid-search.md)
   - Tags: `firestore`, `vector-search`, `hybrid-search`, `japanese-nlp`
   - 概要: Firestore Native の `findNearest` (768次元ベクトル検索) と `array-contains-any` (日本語 Bi-gram トークン検索) を併用し、Reciprocal Rank Fusion (RRF) でスコア統合する設計とインデックス制約。
+- [Firestore Native / gRPC における UTF-16 サロゲートペア（絵文字）分断による 3 INVALID_ARGUMENT エラーと対策](./firestore-surrogate-pair-bigram.md)
+  - Tags: `firestore`, `unicode`, `grpc`, `japanese-nlp`
+  - 概要: 日本語全文検索用 Bi-gram 抽出時に絵文字（サロゲートペア）を単純スライスすることで発生する孤立サロゲートと、Firestore gRPC クライアントにおける `3 INVALID_ARGUMENT` エラーの根本原因およびコードポイント単位処理による多層防御策。
 - [システム利用ガイド（HTML ドキュメント）のマルチチャネル配信アーキテクチャ](./system-usage-guide.md)
   - Tags: `documentation`, `static-hosting`, `gcp`
   - 概要: `packages/web/public/guide.html` を SSOT とし、GitHub Pages (`docs/index.html` 相対シンボリックリンク)、Cloud Run Web フロントエンド、および Hono API サーバー直接配信 (`/guide`, `/guide.html`) を統合した静的ドキュメント配信アーキテクチャ。

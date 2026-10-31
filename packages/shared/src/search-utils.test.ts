@@ -22,6 +22,21 @@ describe("extractSearchTokens", () => {
     const queryTokens = extractQueryTokens(longQuery)
     expect(queryTokens.length).toBeLessThanOrEqual(30)
   })
+
+  it("絵文字やサロゲートペアを含むテキストから孤立サロゲートが発生せず安全なトークンが抽出できることを保証する", () => {
+    const textWithEmoji = "プロジェクト計画書🚀🔥と議事録📝2026"
+    const tokens = extractSearchTokens(textWithEmoji)
+
+    // 孤立サロゲート（\uD800-\uDFFF）がトークン内に一切含まれないことを保証
+    const hasBrokenSurrogate = tokens.some((token) =>
+      /[\uD800-\uDFFF]/.test(token),
+    )
+    expect(hasBrokenSurrogate).toBe(false)
+    expect(tokens).toContain("計画")
+    expect(tokens).toContain("画書")
+    expect(tokens).toContain("議事")
+    expect(tokens).toContain("事録")
+  })
 })
 
 describe("computeRrfScores", () => {

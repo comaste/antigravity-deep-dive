@@ -27,16 +27,25 @@ export function extractSearchTokens(text: string, maxTokens = 250): string[] {
     }
   }
 
-  // 記号や空白を除去した文字列から日本語・漢字・カナの Bi-gram (2文字組) を抽出
-  const cleanedForBigrams = normalized.replace(
-    /[\s!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~、「」。・（）【】『』「」〜：；！？]/g,
-    "",
-  )
+  // 記号や空白、絵文字・サロゲートペアを除去した文字列から日本語・漢字・カナの Bi-gram (2文字組) を抽出
+  // （Why not: UTF-16 サロゲートペアを slice で分断すると Firestore / gRPC が不正 UTF-8 として INVALID_ARGUMENT エラーを返すため、
+  // \p{Extended_Pictographic}\p{Surrogate} を除外した上で Array.from による Unicode コードポイント単位で配列化する）
+  const cleanedForBigrams = normalized
+    .replace(/[\p{Extended_Pictographic}\p{Surrogate}]/gu, "")
+    .replace(
+      /[\s!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~、「」。・（）【】『』「」〜：；！？]/g,
+      "",
+    )
 
-  for (let i = 0; i < cleanedForBigrams.length - 1; i++) {
-    const bigram = cleanedForBigrams.slice(i, i + 2)
+  const codePoints = Array.from(cleanedForBigrams)
+  for (let i = 0; i < codePoints.length - 1; i++) {
+    const charA = codePoints[i] ?? ""
+    const charB = codePoints[i + 1] ?? ""
+    const bigram = `${charA}${charB}`
     const isPureAscii = /^[a-z0-9]{2}$/.test(bigram)
-    if (!isPureAscii) {
+    const hasBrokenSurrogate = /[\uD800-\uDFFF]/.test(bigram)
+
+    if (!isPureAscii && !hasBrokenSurrogate) {
       tokenSet.add(bigram)
     }
     const reachedLimit = tokenSet.size >= maxTokens

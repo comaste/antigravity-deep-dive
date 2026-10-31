@@ -203,11 +203,13 @@ export async function triggerSyncWorkflow(
     return completedJob
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : null
     logger.error(
       "sync.job.failed",
       `Sync job ${job.id} failed: ${errorMessage}`,
       {
         jobId: job.id,
+        stack: errorStack,
       },
     )
     return completeSyncJob(job.id, "failed", 0, errorMessage)
