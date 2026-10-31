@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.firebase/
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!terraform.tfvars.example
+.DS_Store

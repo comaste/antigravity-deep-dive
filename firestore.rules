@@ -1,0 +1,124 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model & Architecture
+// ===============================================================
+//
+// Architecture Overview:
+// All Firestore reads and writes in this system are performed exclusively
+// from the backend server on Cloud Run (or locally via the Admin SDK
+// `@google-cloud/firestore`), which authenticates using IAM service account
+// credentials and bypasses Firestore Security Rules.
+//
+// Direct client SDK access (web/mobile browsers) is strictly prohibited
+// across the entire database to protect sensitive OAuth tokens, enterprise
+// documents, and vector embeddings.
+//
+// Collections (Server-Side Admin SDK Only):
+//
+// 1. Collection: connectors
+//    Document ID: {provider} ("notion" | "box")
+//    Fields:
+//      - provider: string (required, enum: ["notion", "box"])
+//      - connected: bool (required)
+//      - workspaceName: string (optional/nullable, max 200 chars)
+//      - accessTokenSecretRef: string (optional, server-only secret ref)
+//      - updatedAt: string (required, ISO 8601 timestamp)
+//
+// 2. Collection: syncTargets
+//    Document ID: {targetId}
+//    Fields:
+//      - id: string (required, immutable)
+//      - provider: string (required, enum: ["notion", "box"])
+//      - externalId: string (required, max 256 chars)
+//      - name: string (required, max 500 chars)
+//      - enabled: bool (required)
+//      - lastSyncedAt: string (optional/nullable, ISO 8601 timestamp)
+//      - status: string (required, enum: ["idle", "syncing", "completed", "failed"])
+//
+// 3. Collection: documents
+//    Document ID: {documentId}
+//    Fields:
+//      - id: string (required, immutable)
+//      - provider: string (required, enum: ["notion", "box"])
+//      - externalId: string (required, max 256 chars)
+//      - title: string (required, max 1000 chars)
+//      - url: string (required, valid https URL)
+//      - path: list of strings (required, max 50 items)
+//      - author: string (optional, max 200 chars)
+//      - mimeType: string (optional, max 128 chars)
+//      - contentHash: string (required, SHA-256 hex)
+//      - externalUpdatedAt: string (required, ISO 8601 timestamp)
+//      - syncedAt: string (required, ISO 8601 timestamp)
+//
+// 4. Collection: chunks
+//    Document ID: {chunkId}
+//    Fields:
+//      - chunkId: string (required, immutable)
+//      - documentId: string (required, immutable)
+//      - provider: string (required, enum: ["notion", "box"])
+//      - title: string (required, max 1000 chars)
+//      - url: string (required, valid https URL)
+//      - path: list of strings (required, max 50 items)
+//      - snippet: string (required, max 5000 chars)
+//      - author: string (optional, max 200 chars)
+//      - mimeType: string (optional, max 128 chars)
+//      - externalUpdatedAt: string (required, ISO 8601 timestamp)
+//      - searchTokens: list of strings (required, max 1000 items)
+//      - embedding: vector (required, 768 dimensions)
+//
+// 5. Collection: syncJobs
+//    Document ID: {jobId}
+//    Fields:
+//      - id: string (required, immutable)
+//      - provider: string (required, enum: ["all", "notion", "box"])
+//      - status: string (required, enum: ["running", "completed", "failed"])
+//      - processedCount: number (required, >= 0)
+//      - errorMessage: string (optional/nullable, max 2000 chars)
+//      - startedAt: string (required, ISO 8601 timestamp)
+//      - finishedAt: string (optional/nullable, ISO 8601 timestamp)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Explicitly deny all direct client requests.
+    function isClientAccessAllowed() {
+      return false;
+    }
+
+    // ===============================================================
+    // Collection Rules (Backend-Only Access)
+    // ===============================================================
+
+    match /connectors/{connectorId} {
+      allow read, write: if isClientAccessAllowed();
+    }
+
+    match /syncTargets/{targetId} {
+      allow read, write: if isClientAccessAllowed();
+    }
+
+    match /documents/{documentId} {
+      allow read, write: if isClientAccessAllowed();
+    }
+
+    match /chunks/{chunkId} {
+      allow read, write: if isClientAccessAllowed();
+    }
+
+    match /syncJobs/{jobId} {
+      allow read, write: if isClientAccessAllowed();
+    }
+
+    // Default deny catch-all for any other path
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

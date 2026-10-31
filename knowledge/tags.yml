@@ -1,0 +1,15 @@
+tags:
+  firestore:
+    description: Google Cloud Firestore (Native Mode) のデータモデリング、クエリ、インデックス設計に関する知見
+  vector-search:
+    description: 埋め込みベクトル（Embeddings）を用いた近傍探索（KNN / ANN）とインデックス設計
+  hybrid-search:
+    description: ベクトル検索（意味検索）とキーワード検索（語彙一致）を組み合わせる検索アーキテクチャと RRF 統合
+  japanese-nlp:
+    description: 日本語テキストの正規化、Bi-gram トークナイズ、検索トークン生成に関する知見
+  gcp:
+    description: Google Cloud Platform (Cloud Run, Secret Manager, Cloud Scheduler, IAM 等) の構成と運用
+  documentation:
+    description: システム利用ガイド・運用マニュアル・技術ドキュメントの作成および配信アーキテクチャに関する知見
+  static-hosting:
+    description: Vite public 配信、GitHub Pages、およびバックエンド直接配信を含む静的 Web アセットのマルチチャネルホスティング設計

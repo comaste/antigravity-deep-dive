@@ -1,0 +1,17 @@
+packages:
+  - "packages/*"
+
+minimumReleaseAge: 1440
+strictDepBuilds: true
+allowBuilds:
+  esbuild: true
+  protobufjs: false
+  re2: false
+  "@google/genai": false
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # undici-types@6.21.0 (@types/node@22 依存) は v7 系公開後に provenance なしでバックポート公開された公式型定義パッケージのため除外
+  - "undici-types@6.21.0"
+  # semver@6.3.1 (@babel/core 依存) は v7 系公開後に provenance なしでバックポート公開された公式メンテナンスリリースのため除外
+  - "semver@6.3.1"
+blockExoticSubdeps: true

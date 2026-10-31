@@ -1,0 +1,3 @@
+# Gitleaks allowlist
+justfile:generic-api-key:10
+bin/sync-keychain-secrets.sh:generic-api-key:5

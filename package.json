@@ -1,0 +1,24 @@
+{
+  "name": "antigravity-deep-dive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel -r dev",
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "oxlint",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "firebase-tools": "^13.30.0",
+    "oxfmt": "^0.1.0",
+    "oxlint": "^0.15.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
