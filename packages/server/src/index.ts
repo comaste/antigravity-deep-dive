@@ -4,6 +4,7 @@ import { existsSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { serve } from "@hono/node-server"
+import { serveStatic } from "@hono/node-server/serve-static"
 import { zValidator } from "@hono/zod-validator"
 import { Hono } from "hono"
 import { cors } from "hono/cors"
@@ -56,6 +57,27 @@ export function resolveGuideHtmlPath(): string | null {
     path.resolve(process.cwd(), "public/guide.html"),
     path.resolve(__dirname, "../../web/public/guide.html"),
     path.resolve(__dirname, "../../../docs/index.html"),
+  ]
+
+  for (const candidate of candidatePaths) {
+    const isExisting = existsSync(candidate)
+    if (isExisting) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+/**
+ * フロントエンド Web SPA (packages/web/dist) のビルド出力ディレクトリパスを探索する。
+ */
+export function resolveWebDistPath(): string | null {
+  const candidatePaths = [
+    path.resolve(process.cwd(), "packages/web/dist"),
+    path.resolve(__dirname, "../../web/dist"),
+    path.resolve(process.cwd(), "web/dist"),
+    path.resolve(process.cwd(), "dist"),
   ]
 
   for (const candidate of candidatePaths) {
@@ -370,6 +392,32 @@ app.post("/api/admin/seed", async (c) => {
     traceId: c.get("traceId"),
   })
 })
+
+const webDistPath = resolveWebDistPath()
+const hasWebDist = webDistPath !== null
+
+if (hasWebDist) {
+  // Why not: なぜ API ルートより後に静的ファイル配信を登録するか: /api/* ルートへのアクセスが静的ファイル探索に横取りされず、API ハンドラへ直行させることでレスポンスレイテンシを最小化するため。
+  const relativeDistPath = path.relative(process.cwd(), webDistPath)
+  app.use("/*", serveStatic({ root: relativeDistPath }))
+
+  // SPA フォールバック: /api/* 以外の未知のパスに対して index.html を返却し TanStack Router によるクライアントルーティングを可能にする
+  app.get("*", async (c, next) => {
+    const isApiRoute = c.req.path.startsWith("/api/")
+    if (isApiRoute) {
+      return next()
+    }
+
+    const indexPath = path.join(webDistPath, "index.html")
+    const isIndexPresent = existsSync(indexPath)
+    if (isIndexPresent) {
+      const htmlContent = await fs.readFile(indexPath, "utf-8")
+      return c.html(htmlContent)
+    }
+
+    return next()
+  })
+}
 
 const isDirectServerRun =
   process.argv[1]?.endsWith("index.ts") || process.argv[1]?.endsWith("index.js")

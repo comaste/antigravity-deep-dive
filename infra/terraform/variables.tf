@@ -25,3 +25,9 @@ variable "container_image" {
   description = "Container image URI for Cloud Run service"
   type        = string
 }
+
+variable "enable_public_access" {
+  description = "Whether to allow unauthenticated invocation of Cloud Run (allUsers)"
+  type        = bool
+  default     = true
+}

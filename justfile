@@ -53,3 +53,16 @@ check-docs:
 # Terraform の実行計画を確認する
 plan-infra:
     cd infra/terraform && terraform init -backend=false && terraform validate
+
+# Cloud Build を使用してコンテナイメージを Artifact Registry へビルド・プッシュする
+build-image project_id="antigravity-deep" image_tag="asia-northeast1-docker.pkg.dev/antigravity-deep/notion-box-search/app:latest":
+    gcloud builds submit --project="{{ project_id }}" --tag="{{ image_tag }}" .
+
+# Terraform でインフラリソース（Cloud Run, Firestore, Secret Manager 等）を適用する
+apply-infra:
+    cd infra/terraform && terraform apply -auto-approve
+
+# コンテナイメージのビルドから Terraform による本番デプロイまでを一括実行する
+deploy-app:
+    just build-image
+    just apply-infra

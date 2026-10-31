@@ -1,0 +1,6 @@
+project_id           = "antigravity-deep"
+region               = "asia-northeast1"
+service_name         = "notion-box-search"
+allowed_google_domain = "cureapp.jp"
+container_image      = "asia-northeast1-docker.pkg.dev/antigravity-deep/notion-box-search/app:latest"
+enable_public_access = true

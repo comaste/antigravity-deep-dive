@@ -1,3 +1,15 @@
+resource "google_artifact_registry_repository" "app_repo" {
+  project       = var.project_id
+  location      = var.region
+  repository_id = var.service_name
+  description   = "Docker repository for ${var.service_name}"
+  format        = "DOCKER"
+
+  depends_on = [
+    google_project_service.enabled_apis["artifactregistry.googleapis.com"]
+  ]
+}
+
 resource "google_service_account" "cloud_run_sa" {
   project      = var.project_id
   account_id   = "${var.service_name}-sa"
@@ -85,5 +97,15 @@ resource "google_cloud_run_v2_service" "app" {
   depends_on = [
     google_project_service.enabled_apis["run.googleapis.com"],
     google_project_iam_member.cloud_run_sa_roles,
+    google_secret_manager_secret_version.app_secret_initial_versions,
   ]
+}
+
+resource "google_cloud_run_v2_service_iam_member" "public_access" {
+  count    = var.enable_public_access ? 1 : 0
+  project  = google_cloud_run_v2_service.app.project
+  location = google_cloud_run_v2_service.app.location
+  name     = google_cloud_run_v2_service.app.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }

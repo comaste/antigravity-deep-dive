@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+.env
+.env.*
+infra/terraform/.terraform
+infra/terraform/*.tfstate*
+knowledge
+coverage
+packages/web/dist
